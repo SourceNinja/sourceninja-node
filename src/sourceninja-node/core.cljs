@@ -1,9 +1,49 @@
-(ns sourceninja-node.core
+ (ns sourceninja-node.core
   (:require  [clojure.set :as set]
              [cljs.nodejs :as node]))
 
 (def npm
   (node/require "npm"))
+
+(def https
+  (node/require "https"))
+
+(def post-port
+  443)
+
+(def post-host
+  "app.sourceninja.com")
+
+(defn post-url
+  [product_id token]
+  (str "/products/" product_id "/import?import_type=npm&token=" token))
+
+(defn post-options
+  [product_id token json]
+  {"host" post-host
+   "port" post-port
+   "path" (post-url product_id token)
+   "method" "POST"
+   "headers" (create-headers json)})
+
+(defn create-headers
+  "create a header hash for the given content string"
+  [content]
+  {"Host" "www.example.com"
+   "Content-Type" "application/json"
+   "Content-Length" (. content -length)})
+
+(defn json-generate
+  "Returns a newline-terminate JSON string from the given
+   ClojureScript data."
+  [data]
+  (str (JSON/stringify (vec data)) "\n"))
+
+(defn get-product-and-token
+  []
+  (let [env (. js/process -env)]
+    [(. env -SOURCENINJA_PRODUCT_ID)
+     (. env -SOURCENINJA_PRODUCT_TOKEN)]))
 
 (def test-deps
   {
@@ -46,33 +86,84 @@
    }
   )
 
-(defn flatten-deps
+(defn extract-name-and-version
+  "Take the intermediate output and create a set of
+   hashes. Each hash contains a name and a version"
   [input]
-  (loop [output {}
-         input input]
+  (into #{}
+        (for [[name data] input]
+          {"name" name
+           "version" (get data "version")})))
 
-    (if-not (empty? input)
+(defn flatten-deps
+  "Consume the graph that we get from NPM and spit out a hash of hashes.
+   Each hash contains a name and a version, duplicates are eliminated"
+  [input]
+  (extract-name-and-version
+   (loop [output {}
+          input input]
 
-      (let [notseen (remove (partial contains? output) (keys input))
-            newout (reduce #(assoc %1 %2 (get input %2)) output notseen)
-            ndeps (apply merge (map #(get (get input %1) "dependencies") notseen))]
+     (if-not (empty? input)
 
-        (recur newout ndeps))
-      output)))
+       (let [notseen (remove (partial contains? output) (keys input))
+             newout (reduce #(assoc %1 %2 (get input %2)) output notseen)
+             ndeps (apply merge (map #(get (get input %1) "dependencies") notseen))]
+
+         (recur newout ndeps))
+       output))))
+
+(defn post-deps
+  [deps]
+  (let [json (json-generate deps)
+        [product_id token] (get-product-and-token)
+        request (.request https (post-options product_id token json))]
+    (.write request json)
+    (.end request)))
 
 (defn npm-ls-callback
   [_ _ lite]
   (let [deps (flatten-deps (js->clj (. js/lite -dependencies)))]
-    (println deps)))
+    (post-deps deps)))
 
 (defn load-npm-callback
   [_ npm]
   (.ls (. js/npm -commands) [] true npm-ls-callback))
 
-(defn print-deps
-  []
-  (println
-   (flatten-deps test-deps)))
 
 (set! *main-cli-fn* #(.load npm load-npm-callback))
+
 ;;(set! *main-cli-fn* print-deps)
+
+;; (def http
+;;   (node/require "http"))
+
+;; (defn handler
+;;   [_ res]
+;;   (.writeHead res 200 (str {"Content-Type" "text/plain"}))
+;;   (.end res "Hello World!\n"))
+
+;; (defn start
+;;   [& _]
+;;   (let [server (.createServer http handler)]
+;;     (.listen server 8001 "127.0.0.1")
+;;     (println "Server running at http://127.0.0.1:8001/")))
+
+;; var http = require('http');
+;; var fs = require('fs');
+
+;; var server = http.createServer(function (req, res) {
+;;   console.log("blargl");
+;;   res.writeHead(200, { "Content-Type": "text/plain" });
+;;   res.end(" " + fs.readdirSync(process.cwd()));
+;; });
+
+
+;; var npm = require('npm');
+
+;; npm.load(function(err, npm) {
+;;     npm.commands.ls([], true, function(err, data, lite) {
+;;         console.log(data); //or lite for simplified output
+;;     });
+;; });
+
+;; server.listen(process.env.PORT || 8001);
