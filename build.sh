@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cljsc src '{:optimizations :simple :pretty-print true :target :nodejs}' > lib/sourceninja.js
+cljsc src '{:optimizations :simple :pretty-print true}' > lib/sourceninja.js
