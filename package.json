@@ -1,5 +1,5 @@
 {
-  "name": "sourceninja-node",
+  "name": "sourceninja",
   "preferGlobal": "false",
   "version": "0.0.1",
   "author": "SourceNinja <support@sourceninja.com> (http://www.sourceninja.com/)",
@@ -12,7 +12,9 @@
     "url": "git://github.com/SourceNinja/sourceninja-node.git"
   },
   "license": "AGPL",
-  "dependencies": {},
+  "dependencies": {
+	  "npm": "1.1.16"
+  },
   "devDependencies": {},
   "optionalDependencies": {},
   "engines": {

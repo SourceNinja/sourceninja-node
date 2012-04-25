@@ -11,7 +11,7 @@ lib-cov
 .DS_Store
 .#*
 #*
-
+out
 pids
 logs
 results

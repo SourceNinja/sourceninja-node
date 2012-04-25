@@ -1,6 +1,5 @@
- (ns sourceninja-node.core
-  (:require  [clojure.set :as set]
-             [cljs.nodejs :as node]))
+(ns sourceninja.core
+  (:require [cljs.nodejs :as node]))
 
 (def env
   (. js/process -env))
@@ -103,7 +102,8 @@
 (defn conn-response-handler
   [res]
   (println (str "status: " (. res -statusCode)))
-  (println (str "headers: " (js->clj (. res -headers)))))
+  (println (str "headers: " (js->clj (. res -headers))))
+  (.on res "data" println))
 
 (defn post-deps
   [deps]
@@ -111,7 +111,7 @@
         form_data (str (encode-field-part boundary "token" sn-product-token)
                        (encode-field-part boundary "meata_source_type" "node")
                        (encode-field-part boundary "import_type" "json")
-                       (encode-file-part boundary "application/json" "import" "node.json")
+                       (encode-file-part boundary "application/json" "import[import]" "node.json")
                        json
                        "\r\n--" boundary "--")
         headers (create-headers form_data boundary)
