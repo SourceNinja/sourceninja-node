@@ -26,7 +26,7 @@
   (. env -SOURCENINJA_PRODUCT_ID))
 
 (def sn-product-token
-  (. env -SOURCENINJA_PRODUCT_TOKEN))
+  (. env -SOURCENINJA_TOKEN))
 
 (def boundary
   "blargl")
@@ -101,9 +101,14 @@
 
 (defn conn-response-handler
   [res]
-  (println (str "status: " (. res -statusCode)))
-  (println (str "headers: " (js->clj (. res -headers))))
-  (.on res "data" println))
+  (let [status (. res -statusCode)]
+    (if (= status 201)
+      (println "Sent data to SourceNinja")
+      (do
+        (println "Error sending data to SourceNinja:" status)
+        ;; (println (str "headers: " (js->clj (. res -headers))))
+        ;; (.on res "data" println)
+        ))))
 
 (defn post-deps
   [deps]
@@ -132,7 +137,11 @@
 
 (defn ^:export kapow
   []
-  (.load npm load-npm-callback))
+  (if (= sn-product-id js/undefined)
+    (println "Environment variable SOURCENINJA_PRODUCT_ID is not set, can't send data to SourceNinja")
+    (if (= sn-product-token js/undefined)
+      (println "Environment variable SOURCENINJA_TOKEN is not set, can't send data to SourceNinja")
+      (.load npm load-npm-callback))))
 
 (defn noop
   []
