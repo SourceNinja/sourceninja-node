@@ -1,22 +1,23 @@
 {
-    "name": "sourceninja-node",
-    "preferGlobal": "false",
-    "version": "0.0.1",
-    "author": {
-        "email": "support@sourceninja.com",
-        "name": "SoruceNinja",
-        "url": "http://www.sourceninja.com/"
-    },
-    "description": "a simple way to allow SourceNinja to monitor your Node.js application",
-    "contributors": [
-	{
-	    "name": "Matt Stump",
-	    "email": "mstump@sourceninja.com"
-	}
-    ],
-    "repository": {
-	"type": "git",
-	"url": "git://github.com/SourceNinja/sourceninja-node.git"
-    },
-    "license": "AGPL"
+  "name": "sourceninja-node",
+  "preferGlobal": "false",
+  "version": "0.0.1",
+  "author": "SourceNinja <support@sourceninja.com> (http://www.sourceninja.com/)",
+  "description": "a simple way to allow SourceNinja to monitor your Node.js application",
+  "contributors": [
+    "Matt Stump <mstump@sourceninja.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/SourceNinja/sourceninja-node.git"
+  },
+  "license": "AGPL",
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "homepage": "https://github.com/sourceninja/sourceninja-node",
+  "main": "lib/main.js"
 }
