@@ -134,4 +134,8 @@
   []
   (.load npm load-npm-callback))
 
-(set! *main-cli-fn* kapow)
+(defn noop
+  []
+  nil)
+
+(set! *main-cli-fn* noop)
