@@ -110,6 +110,14 @@
         ;; (.on res "data" println)
         ))))
 
+(defn conn-refused-handler
+  [ex]
+  (println "Error connecting to SourceNinja")
+  (println "HOST" sn-post-host)
+  (println "PORT" sn-post-port)
+  (println "PATH" sn-post-url)
+  (println "EXCEPTION" (js->clj ex)))
+
 (defn post-deps
   [deps]
   (let [json (json-generate (format-deps (flatten-deps deps) (set (keys deps))))
@@ -123,6 +131,7 @@
         options (post-options headers)
         request (.request https options conn-response-handler)]
 
+    (.on request "error" conn-refused-handler)
     (.write request form_data)
     (.end request)))
 
