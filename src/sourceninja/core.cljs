@@ -22,17 +22,12 @@
     hostname
     "app.sourceninja.com"))
 
-(def sn-product-id
-  (. env -SOURCENINJA_PRODUCT_ID))
-
-(def sn-product-token
-  (. env -SOURCENINJA_TOKEN))
-
 (def boundary
   "blargl")
 
-(def sn-post-url
-  (str "/products/" sn-product-id "/imports"))
+(defn sn-post-url
+  [id]
+  (str "/products/" id "/imports"))
 
 (defn make-js-map
   "makes a javascript map from a clojure one"
@@ -61,11 +56,11 @@
     "Content-Length" (. content -length)}))
 
 (defn post-options
-  [headers]
+  [url headers]
   (make-js-map
    {:hostname sn-post-host
     :port sn-post-port
-    :path sn-post-url
+    :path url
     :method "POST"
     :headers headers}))
 
@@ -111,46 +106,50 @@
         ))))
 
 (defn conn-refused-handler
-  [ex]
+  [url ex]
   (println "Error connecting to SourceNinja")
   (println "HOST" sn-post-host)
   (println "PORT" sn-post-port)
-  (println "PATH" sn-post-url)
+  (println "PATH" url)
   (println "EXCEPTION" (js->clj ex)))
 
 (defn post-deps
-  [deps]
-  (let [json (json-generate (format-deps (flatten-deps deps) (set (keys deps))))
-        form_data (str (encode-field-part boundary "token" sn-product-token)
+  [id token deps]
+  (let [url (sn-post-url id)
+        json (json-generate (format-deps (flatten-deps deps) (set (keys deps))))
+        form_data (str (encode-field-part boundary "token" token)
                        (encode-field-part boundary "meata_source_type" "node")
                        (encode-field-part boundary "import_type" "json")
                        (encode-file-part boundary "application/json" "import[import]" "node.json")
                        json
                        "\r\n--" boundary "--")
         headers (create-headers form_data boundary)
-        options (post-options headers)
+        options (post-options url headers)
         request (.request https options conn-response-handler)]
 
-    (.on request "error" conn-refused-handler)
+    (.on request "error" (partial conn-refused-handler url))
     (.write request form_data)
     (.end request)))
 
 (defn npm-ls-callback
-  [_ _ lite]
+  [id token _ _ lite]
   (let [deps (js->clj (. js/lite -dependencies))]
-    (post-deps deps)))
+    (post-deps id token deps)))
 
 (defn load-npm-callback
-  [_ npm]
-  (.ls (. js/npm -commands) [] true npm-ls-callback))
+  [id token _ npm]
+  (.ls (. js/npm -commands) [] true (partial npm-ls-callback id token)))
 
 (defn ^:export kapow
-  []
-  (if (= sn-product-id js/undefined)
-    (println "Environment variable SOURCENINJA_PRODUCT_ID is not set, can't send data to SourceNinja")
-    (if (= sn-product-token js/undefined)
-      (println "Environment variable SOURCENINJA_TOKEN is not set, can't send data to SourceNinja")
-      (.load npm load-npm-callback))))
+  ([]
+     (kapow (. env -SOURCENINJA_PRODUCT_ID) (. env -SOURCENINJA_TOKEN)))
+
+  ([id token]
+     (if (= id js/undefined)
+       (println "Product ID is not set, can't send data to SourceNinja")
+       (if (= token js/undefined)
+         (println "Product token is not set, can't send data to SourceNinja")
+         (.load npm (partial load-npm-callback id token))))))
 
 (defn noop
   []
