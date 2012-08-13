@@ -1,7 +1,7 @@
 {
   "name": "sourceninja",
   "preferGlobal": false,
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": "SourceNinja <support@sourceninja.com> (http://www.sourceninja.com/)",
   "description": "a simple way to allow SourceNinja to monitor your Node.js application",
   "contributors": [
