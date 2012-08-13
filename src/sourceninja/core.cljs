@@ -118,7 +118,7 @@
   (let [url (sn-post-url id)
         json (json-generate (format-deps (flatten-deps deps) (set (keys deps))))
         form_data (str (encode-field-part boundary "token" token)
-                       (encode-field-part boundary "meata_source_type" "node")
+                       (encode-field-part boundary "meta_source_type" "node")
                        (encode-field-part boundary "import_type" "json")
                        (encode-file-part boundary "application/json" "import[import]" "node.json")
                        json
@@ -138,7 +138,7 @@
 
 (defn load-npm-callback
   [id token _ npm]
-  (.ls (. js/npm -commands) [] true (partial npm-ls-callback id token)))
+  (.ls (. js/npm -commands) (array) true (partial npm-ls-callback id token)))
 
 (defn ^:export kapow
   ([]
